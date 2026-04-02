@@ -47,7 +47,6 @@ Pergunta do usuário
 - PDFs de bulas são carregados usando `PyPDFLoader`
 - Metadados são adicionados (nome do medicamento)
 
-📌 Implementação: :contentReference[oaicite:0]{index=0}
 
 ---
 
@@ -55,7 +54,6 @@ Pergunta do usuário
 - Texto dividido em blocos com sobreposição
 - Tokenização baseada em Hugging Face
 
-📌 Implementação: :contentReference[oaicite:1]{index=1}
 
 ---
 
@@ -69,7 +67,6 @@ Cada chunk é classificado em categorias como:
 
 Isso melhora significativamente a qualidade do RAG.
 
-📌 Implementação: :contentReference[oaicite:2]{index=2}
 
 ---
 
@@ -77,7 +74,6 @@ Isso melhora significativamente a qualidade do RAG.
 - Modelo: `intfloat/multilingual-e5-small`
 - Armazenamento vetorial com **FAISS**
 
-📌 Implementação: :contentReference[oaicite:3]{index=3}
 
 ---
 
@@ -85,7 +81,6 @@ Isso melhora significativamente a qualidade do RAG.
 - Busca por similaridade semântica
 - Recupera os chunks mais relevantes
 
-📌 Implementação: :contentReference[oaicite:4]{index=4}
 
 ---
 
@@ -93,7 +88,6 @@ Isso melhora significativamente a qualidade do RAG.
 - Junta os chunks relevantes
 - Extrai categorias associadas
 
-📌 Implementação: :contentReference[oaicite:5]{index=5}
 
 ---
 
@@ -103,7 +97,6 @@ Isso melhora significativamente a qualidade do RAG.
   - zero alucinação
   - baseadas apenas no contexto
 
-📌 Implementação: :contentReference[oaicite:6]{index=6}
 
 ---
 
@@ -113,7 +106,6 @@ Isso melhora significativamente a qualidade do RAG.
   - contexto recuperado
 - Gera resposta final
 
-📌 Implementação: :contentReference[oaicite:7]{index=7}
 
 ---
 
@@ -122,7 +114,6 @@ Isso melhora significativamente a qualidade do RAG.
 - Input de perguntas
 - Exibição de respostas
 
-📌 Implementação: :contentReference[oaicite:8]{index=8}
 
 ---
 
@@ -136,3 +127,48 @@ Isso melhora significativamente a qualidade do RAG.
 - **Streamlit**
 
 ---
+
+## ▶️ Como Executar o Projeto
+
+### 1. Clone o repositório
+
+```bash
+git clone <url-do-repositorio>
+cd <nome-do-projeto>
+code .
+```
+
+### 2. Crie um ambiente virtual
+
+```bash
+python -m venv venv
+
+# Linux / Mac
+source venv/bin/activate  
+
+# Windows
+venv\Scripts\activate
+```
+
+### 3. Instale as dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Executando o Streamlit
+
+```bash
+streamlit run main.py
+```
+
+
+### 5. Executando o Docker
+
+```bash
+docker build -t casas-california .
+docker run -p 8501:8501 casas-california
+```
+
+---
+## 📷 Preview da Aplicação
