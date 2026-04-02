@@ -34,7 +34,7 @@ os.environ['GROQ_API'] = "gsk_7P5iClATbqRivDjWqrL4WGdyb3FYLPREUa0T7xgaOiRR5ege9T
 
 llm = ChatGroq(model="llama-3.3-70b-versatile",
                 temperature=0,
-                groq_api_key= sua_api)
+                groq_api_key= "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")
 
 
 ########################################
@@ -85,56 +85,113 @@ def gerar_chunk(documentos):
 # 5. Fazendo o Enriquecimento dos metadados com Chunk
 ########################################
 
+def encontrar_categoria(texto, regras):
+    for nome_categoria, palavras_chave in regras.items():
+        for palavra_chave in palavras_chave:
+            if palavra_chave in texto:
+                return nome_categoria
+    return "outros"
+
+
 def enriquecer_chunk(chunks):
+    regras = {
+    "indicacao": [
+        "para que este medicamento é indicado",
+        "para que este medicamento serve",
+        "indicações terapêuticas",
+        "indicação do medicamento",
+        "indicações de uso"
+    ],
+
+    "funcionamento": [
+        "como este medicamento funciona",
+        "como o medicamento funciona",
+        "ação esperada do medicamento",
+        "mecanismo de ação"
+    ],
+
+    "contraindicacao": [
+        "quando não devo usar este medicamento",
+        "quando não usar este medicamento",
+        "contraindicações",
+        "contraindicação",
+        "quem não deve usar",
+        "não deve ser utilizado"
+    ],
+
+    "precaucoes": [
+        "o que devo saber antes de usar este medicamento",
+        "advertências e precauções",
+        "advertências",
+        "precauções",
+        "cuidados de uso",
+        "antes de usar"
+    ],
+
+    "posologia": [
+        "como devo usar este medicamento",
+        "como usar este medicamento",
+        "posologia",
+        "modo de usar",
+        "modo de administração",
+        "administração",
+        "dose recomendada"
+    ],
+
+    "dose_esquecida": [
+        "o que fazer quando eu me esquecer de usar este medicamento",
+        "o que fazer se eu esquecer de usar este medicamento",
+        "esquecimento de dose",
+        "dose esquecida",
+        "esquecer de tomar"
+    ],
+
+    "efeitos_adversos": [
+        "quais os males que este medicamento pode me causar",
+        "reações adversas",
+        "reação adversa",
+        "efeitos colaterais",
+        "efeitos adversos",
+        "eventos adversos"
+    ],
+
+    "superdose": [
+        "o que fazer se alguém usar uma quantidade maior do que a indicada",
+        "o que fazer se usar uma quantidade maior do que a indicada",
+        "superdose",
+        "sobredosagem",
+        "uso em excesso",
+        "dose excessiva"
+    ],
+
+    "composicao": [
+        "composição",
+        "composição do medicamento",
+        "composição qualitativa",
+        "composição quantitativa"
+    ],
+
+    "armazenamento": [
+        "onde, como e por quanto tempo posso guardar este medicamento",
+        "cuidados de conservação",
+        "armazenamento",
+        "conservação do medicamento"
+    ]
+}
+
     for chunk in chunks:
-
-        # Normalizando o texto para facilitar as verificações
         texto = chunk.page_content.lower()
-
-        # Indicações terapêuticas
-        if "para que este medicamento é indicado" in texto or "indicação" in texto:
-            chunk.metadata["categoria"] = "indicacao"
-
-        # funcionamento do medicamento
-        elif "como este medicamento funciona" in texto or "funcionamento" in texto:
-            chunk.metadata["categoria"] = "funcionamento"
-
-        # Contraindicações do uso
-        elif "quando não devo usar este medicamento" in texto or "contraindicação" in texto:
-            chunk.metadata["categoria"] = "contraindicacao"
-
-        # O que saber antes de Usar
-        elif "o que devo saber antes de usar este medicamento" in texto or "saber antes" in texto:
-            chunk.metadata["categoria"] = "saber_antes"
-
-        # Como usar o medicamento
-        elif "como devo usar este medicamento" in texto or "uso" in texto:
-            chunk.metadata["categoria"] = "uso_medicamento"
-
-        # Esquecer de tomar o medicamento
-        elif "o que fazer quando esquecer de tomar o medicamento" in texto or "esquecer" in texto:
-            chunk.metadata["categoria"] = "esquecer_medicamento"
-
-        # O que o medicamento pode causar
-        elif "o que pode causar este medicamento" in texto or "causa" in texto:
-            chunk.metadata["categoria"] = "causa_medicamento"
-
-        # Tomar altas doses do medicamento
-        elif "o que fazer se tomar uma quantidade maior de medicamento" in texto or "alta" in texto:
-            chunk.metadata["categoria"] = "alta_dose"
-
-        else:
-            chunk.metadata["categoria"] = "outros"
+        categoria = encontrar_categoria(texto, regras)
+        chunk.metadata["categoria"] = categoria
 
     return chunks
 
 ########################################
 # 6. Fazendo o Vector Store + Embeddings
 ########################################
+embeddings = HuggingFaceEmbeddings(model_name="intfloat/multilingual-e5-small")
 
 def cria_vectorstore(chunks):
-
-    embeddings = HuggingFaceEmbeddings(model_name="intfloat/multilingual-e5-small")
 
     vector_store = FAISS.from_documents(
         documents=chunks,
@@ -151,33 +208,65 @@ def cria_retriever(vector_store):
 
     retriever = vector_store.as_retriever(
         search_type="similarity",
-        search_kwargs={"k": 3}
+        search_kwargs={"k": 4}
     )
 
     return retriever
 
 ########################################
-# 8. Fazendo a Chain
+# 8. Recuperando o Contexto
+########################################
+
+def recuperar_contexto(pergunta, retriever):
+    docs = retriever.invoke(pergunta)
+
+    contextos = []
+    categorias = []
+
+    for doc in docs:
+        contextos.append(doc.page_content)
+        if "categoria" in doc.metadata:
+            categorias.append(doc.metadata["categoria"])
+
+    return {
+        "contexto": "\n\n".join(contextos),
+        "categorias": list(set(categorias))
+    }
+
+########################################
+# 9. Fazendo a Chain
 ########################################
 
 def criar_chain(retriever, llm):
 
     prompt = ChatPromptTemplate.from_messages([
         (
-            "system", "Responda de forma detalhada e apenas com base no contexto fornecido.\n Contexto: \n{contexto}"
+            "system",
+            """
+            Você é um assistente de perguntas e respostas baseado em contexto recuperado.
+
+            Regras:
+            1. Responda usando somente as informações do CONTEXTO.
+            2. Não invente informações, exemplos, números ou definições que não estejam no CONTEXTO.
+            3. Se o CONTEXTO não trouxer informação suficiente para responder com segurança, diga claramente:
+            "Não encontrei informação suficiente no contexto para responder."
+            4. Se houver trechos conflitantes no CONTEXTO, aponte o conflito e não assuma nada sem evidência.
+            5. Seja claro, objetivo e fiel ao texto recuperado.
+            6. Sempre que possível, cite o trecho ou documento de onde tirou a resposta.
+            7. Organize a resposta em tópicos quando isso melhorar a clareza.
+
+            CONTEXTO:
+            {contexto}
+            """
         ),
         (
             "human", "Pergunta: \n{pergunta}"
         )
     ])
-
-    def recuperar_contexto(pergunta):
-        docs = retriever.invoke(pergunta)
-        return "\n".join(doc.page_content for doc in docs)
     
     rag_chain = (
         {
-            "contexto": RunnablePassthrough(recuperar_contexto),
+            "contexto": RunnableLambda(lambda pergunta: recuperar_contexto(pergunta, retriever)["contexto"]),
             "pergunta": RunnablePassthrough()
         }
         | prompt
@@ -215,9 +304,11 @@ if pergunta:
         chunk = enriquecer_chunk(chunk)
         vectorstore = cria_vectorstore(chunk)
         retriever = cria_retriever(vectorstore)
+
         rag_chain = criar_chain(retriever, llm)
 
         resposta = rag_chain.invoke(pergunta)
+        recupera_contexto = recuperar_contexto(pergunta, retriever)
 
     st.subheader("Resposta")
     st.write(resposta)
