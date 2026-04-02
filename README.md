@@ -172,3 +172,5 @@ docker run -p 8501:8501 casas-california
 
 ---
 ## 📷 Preview da Aplicação
+
+<img width="716" height="674" alt="image" src="https://github.com/user-attachments/assets/be54b7a0-a3cb-4029-8ea0-abb973c2c9de" />
