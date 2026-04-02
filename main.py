@@ -26,7 +26,7 @@ from langchain_core.output_parsers import StrOutputParser
 import os
 import streamlit as st
 
-os.environ['GROQ_API'] = "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"
+os.environ['GROQ_API'] = "API_GROQ"
 
 ########################################
 # 2. Modelo LLM
@@ -34,7 +34,7 @@ os.environ['GROQ_API'] = "gsk_7P5iClATbqRivDjWqrL4WGdyb3FYLPREUa0T7xgaOiRR5ege9T
 
 llm = ChatGroq(model="llama-3.3-70b-versatile",
                 temperature=0,
-                groq_api_key= "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")
+                groq_api_key= "API_GROQ")
 
 
 ########################################
@@ -283,7 +283,7 @@ def criar_chain(retriever, llm):
 st.set_page_config(
     page_title="Agente Farmacêutico com RAG",
     page_icon="💊",
-    layout="wide"
+    layout="centered"
 )
 
 st.title("💊 Agente Farmacêutico")
