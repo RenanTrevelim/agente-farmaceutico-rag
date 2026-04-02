@@ -156,14 +156,28 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Executando o Streamlit
+### 4. Configure a API do Groq
+
+Para utilizar o modelo LLM, é necessário configurar sua chave da API do Groq.
+
+Você pode obter sua chave em:
+👉 https://console.groq.com/
+
+Depois, defina a variável de ambiente:
+
+#### Linux / Mac
+```bash
+GROQ_API_KEY="sua-chave-aqui"
+```
+
+### 5. Executando o Streamlit
 
 ```bash
 streamlit run main.py
 ```
 
 
-### 5. Executando o Docker
+### 6. Executando o Docker
 
 ```bash
 docker build -t casas-california .
